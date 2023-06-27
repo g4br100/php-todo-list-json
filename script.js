@@ -3,38 +3,39 @@ const { createApp } = Vue;
 createApp({
     data() {
         return {
-            taskList: [
-                {
-                    message: 'A',
-                    flag: false,
-                },
-                {
-                    message: 'B',
-                    flag: false,
-                },
-                {
-                    message: 'C',
-                    flag: false,
-                },
-            ],
+            taskList: [],
 
             errorMessage: "",
+
             newMessageTask: "",
 
         }
     },
     methods: {
-        log() {
-            console.log("mi hai cliccato")
+
+        readApi() {
+            axios.get('server.php')
+                .then(result => {
+                    this.taskList = result.data
+                    console.log('Risultato chiamata Api --->', result.data)
+                    console.log('Risultato', this.taskList)
+                })
         },
+
         deleteTask(task, index) {
             if (task.flag) {
-                this.taskList.splice(index, 1);
+                const data = new FormData();
+                data.append('indexToDelete', index)
+
+                axios.post('server.php', data)
+                    .then(result => {
+                        this.taskList = result.data
+                    })
+
                 this.errorMessage = "Task rimossa"
                 setTimeout(() => {
                     this.errorMessage = ""
                 }, 2000);
-
             } else {
                 this.errorMessage = "Prima contrassegnare la task"
                 setTimeout(() => {
@@ -42,13 +43,17 @@ createApp({
                 }, 2000);
             }
         },
+
         createNewObj() {
-            const obj = {
-                message: this.newMessageTask,
-                flag: false
-            }
             if (this.newMessageTask.length >= 5) {
-                this.taskList.unshift(obj)
+                newTask = this.newMessageTask;
+                const data = new FormData()
+                data.append('newOne', newTask)
+                axios.post('server.php', data)
+                    .then(result => {
+                        this.newMessageTask = '';
+                        this.taskList = result.data;
+                    })
                 this.newMessageTask = ""
             } else {
                 this.errorMessage = "La task deve avere almeno 5 caratteri"
@@ -56,8 +61,11 @@ createApp({
                     this.errorMessage = ""
                 }, 2000);
             }
+        },
+    },
+    mounted() {
+        this.readApi()
 
-        }
     }
 
 }).mount('#app')
